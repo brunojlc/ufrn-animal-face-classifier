@@ -22,7 +22,7 @@ Student: **Bruno José Leal Coimbra**
     - [9.3 Deeper Model (3 CNN Blocks)](#93-deeper-model-3-cnn-blocks)
     - [9.4 My Model](#94-my-model)
   - [10. Learning Rate Optimization (Part 02)](#10-learning-rate-optimization-part-02)
-    - [9.5 Experiment 5: Retraining with Optimal Learning Rate](#95-experiment-5-retraining-with-optimal-learning-rate)
+    - [10.1 Experiment 5: Retraining My Model with Optimal Learning Rate](#101-experiment-5-retraining-my-model-with-optimal-learning-rate)
   - [11. Performance Comparison and Final Conclusion](#11-performance-comparison-and-final-conclusion)
     - [11.1 Final Results Summary](#111-final-results-summary)
     - [11.2 Conclusion](#112-conclusion)
@@ -265,7 +265,7 @@ This model achieved the highest accuracy of all experiments, at **97.47%**. The 
 
 After identifying the most promising architecture (`CNN_96` with 96x96 images), the second part of the project focused on systematically optimizing the training process. The goal was to use a Learning Rate Finder (LRF) to determine the optimal learning rate, rather than relying on a default value, and verify if this could further improve the model's performance.
 
-### 9.5 Experiment 5: Retraining with Optimal Learning Rate
+### 10.1 Experiment 5: Retraining My Model with Optimal Learning Rate
 
 * Architecture: `CNN_96` (Deeper, 3-Block Model)
 * Input Image Size: 96x96
