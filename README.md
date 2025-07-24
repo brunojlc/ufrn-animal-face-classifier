@@ -21,9 +21,11 @@ Student: **Bruno José Leal Coimbra**
     - [9.2 Wider Model (Base Model with 128 features)](#92-wider-model-base-model-with-128-features)
     - [9.3 Deeper Model (3 CNN Blocks)](#93-deeper-model-3-cnn-blocks)
     - [9.4 My Model](#94-my-model)
-  - [10. Performance Comparison and Final Conclusion](#10-performance-comparison-and-final-conclusion)
-    - [10.1 Final Results Summary](#101-final-results-summary)
-    - [10.2 Conclusion](#102-conclusion)
+  - [10. Learning Rate Optimization (Part 02)](#10-learning-rate-optimization-part-02)
+    - [9.5 Experiment 5: Retraining with Optimal Learning Rate](#95-experiment-5-retraining-with-optimal-learning-rate)
+  - [11. Performance Comparison and Final Conclusion](#11-performance-comparison-and-final-conclusion)
+    - [11.1 Final Results Summary](#111-final-results-summary)
+    - [11.2 Conclusion](#112-conclusion)
 
 ## 1. Project Overview
 
@@ -43,22 +45,31 @@ ufrn-animal-face-classifier/
 │   ├── 01_cm_base_model.png
 │   ├── 01_loss_base_model.png
 │   ├── 01_metrics_base_model.png
+│   ├── 01_hooks.png
 │   ├── 02_cm_wider_model.png
 │   ├── 02_loss_wider_model.png
 │   ├── 02_metrics_wider_model.png
+│   ├── 02_hooks.png
 │   ├── 03_cm_deeper_model.png
 │   ├── 03_loss_deeper_model.png
 │   ├── 03_metrics_deeper_model.png
-│   ├── 04_cm_my_model.pn
+│   ├── 03_hooks.png
+│   ├── 04_cm_my_model.png
 │   ├── 04_loss_my_model.png
-│   └── 04_metrics_my_model.png                       
+│   ├── 04_metrics_my_model.png
+│   ├── 04_hooks.png
+│   ├── 05_cm.png
+│   ├── 05_loss.png
+│   └── 05_metrics.png                       
 ├── model/                                           # Store trained models
 │   ├── base_model_28x28.pth
 │   ├── wider_model_128f_28x28.pth
 │   ├── deeper_model_64f_28x28.pth
-│   └── user_model_v2_96x96.pth
+│   ├── user_model_v2_96x96.pth
+│   └── user_model_v2_96x96_with_LR.pth
 ├── .gitignore                                       # Git file
-├── notebook_01.ipynb                                # Main jupyter notebook with all codes and experiments
+├── notebook_01.ipynb                                # Part 1 - Main jupyter notebook with all codes and experiments
+├── notebook_02.ipynb                                # Part 2 - Finding LR and training again My Model (CNN_96)
 └── README.md                                        # Project description
 ```
 
@@ -141,6 +152,8 @@ This section details the architecture, training results, and evaluation metrics 
 **Description**:
 This model serves as the baseline for all experiments. It uses a standard two-block CNN architecture. Each block consists of a convolution layer, a ReLU activation, and a max-pooling layer. Dropout regularization (p=0.5) was included to establish a strong, generalizable baseline.
 
+**Hooks**: [Click here](./images/01_hooks.png) to view the hooks for experimenter 1 model.
+
 **Results**:
 
 - Overall Accuracy: 96.27%
@@ -168,6 +181,8 @@ The base model achieved an excellent accuracy of 96.27%, establishing a very str
 
 **Description**:
 In this experiment, the number of feature maps in the convolutional layers was doubled from 64 to 128. The goal was to test the hypothesis that a "wider" model with more capacity could learn a richer set of features and improve classification performance. Dropout was kept at 0.5 to control for the increased risk of overfitting due to the higher number of parameters.
+
+**Hooks**: [Click here](./images/02_hooks.png) to view the hooks for experimenter 2 model.
 
 **Results**:
 - Overall Accuracy: 96.07%
@@ -197,6 +212,8 @@ The wider model achieved an accuracy of 96.07%, a result that is statistically v
 **Description**:
 This experiment tested the hypothesis that a deeper network could achieve better performance. A third convolutional block (`CONV -> RELU -> POOL`) was added to the base architecture. This modification makes the model deeper, allowing it to potentially learn a more complex hierarchy of features, while paradoxically reducing the total number of trainable parameters due to the smaller feature map size entering the classifier.
 
+**Hooks**: [Click here](./images/03_hooks.png) to view the hooks for experimenter 3 model.
+
 **Results**:
 - Overall Accuracy: 94.67%
 - Precision (Macro Avg): 0.95
@@ -223,6 +240,8 @@ This experiment tested the hypothesis that a deeper network could achieve better
 **Description**:
 This final experiment was designed to test the hypothesis that providing the model with more detailed input data would yield the best performance. The architecture was deepened to three convolutional blocks (`CNN_96`) to efficiently process the larger 96x96 input images. This model combines the insights from previous experiments: using a deeper network that is still parameter-efficient, applying robust dropout regularization, and leveraging higher-resolution images.
 
+**Hooks**: [Click here](./images/04_hooks.png) to view the hooks for experimenter 4 model.
+
 **Results**:
 
 - Overall Accuracy: 97.47%
@@ -241,12 +260,45 @@ This final experiment was designed to test the hypothesis that providing the mod
 **Analysis**:
 This model achieved the highest accuracy of all experiments, at **97.47%**. The loss curve demonstrates a very healthy and stable training process, with the validation loss closely tracking the training loss, indicating excellent generalization. The confusion matrix shows the lowest number of misclassifications, confirming the model's superior performance. The success of this model confirms the initial hypothesis: the key limiting factor for this problem was the input image resolution. By providing more detailed images (96x96) to a sufficiently deep and well-regularized architecture, the model was able to learn more discriminative features and achieve the best overall results.
 
+ 
+## 10. Learning Rate Optimization (Part 02)
 
-## 10. Performance Comparison and Final Conclusion
+After identifying the most promising architecture (`CNN_96` with 96x96 images), the second part of the project focused on systematically optimizing the training process. The goal was to use a Learning Rate Finder (LRF) to determine the optimal learning rate, rather than relying on a default value, and verify if this could further improve the model's performance.
+
+### 9.5 Experiment 5: Retraining with Optimal Learning Rate
+
+* Architecture: `CNN_96` (Deeper, 3-Block Model)
+* Input Image Size: 96x96
+* Number of Features (`n_feature`): `64`
+* Dropout Rate (`p`): `0.5`
+* Optimal Learning Rate: `2.96e-3` (found via LR Finder)
+
+**Description:**
+The `torch-lr-finder` library was used to perform a learning rate range test on the untrained `CNN_96` architecture. The test suggested an optimal learning rate of approximately `2.96e-3`. This final experiment involves retraining the best-performing architecture from scratch using this new, systematically found learning rate.
+
+**Results**:
+
+- Overall Accuracy: 97.47%
+- Precision (Macro Avg): 0.98
+- Recall (Macro Avg): 0.97
+- F1-Score (Macro Avg): 0.97
+
+**Loss Curve:**
+
+![Loss Curve for Optimal LR Model](./images/05_loss.png)
+
+**Confusion Matrix:**
+
+![cm my model with optim lr](./images/05_cm.png)
+
+**Analysis**:
+The model retrained with the optimal learning rate achieved a final accuracy of **97.47%**. This result is statistically on par with the previous experiment, confirming that the initial learning rate of `3e-4` was already very effective. The primary benefit of this final step was to validate the training process, demonstrating that the chosen hyperparameters are robust and systematically verified. The confusion matrix shows a very low number of errors, with the model performing exceptionally well across all three classes. This confirms that the `CNN_96` architecture with a 96x96 input resolution is the best approach for this problem among the tested configurations.
+
+## 11. Performance Comparison and Final Conclusion
 
 This section provides a comparative analysis of the four models trained in this project. The goal was to systematically evaluate how architectural changes, such as width, depth, and input resolution, affect the final performance on the "Animal Faces (AFHQ)" classification task.
 
-### 10.1 Final Results Summary
+### 11.1 Final Results Summary
 
 The table below summarizes the key performance metrics for each of the four models on the validation set.
 
@@ -256,14 +308,15 @@ The table below summarizes the key performance metrics for each of the four mode
 | 2 |Wider Model|	CNN2	|128	|28x28|	0.5|	96.07%	|Increasing width did not improve performance.|
 |3| Deeper Model|	CNN3|	64|	28x28|	0.5|	94.67%|	Increasing depth was detrimental at this resolution.|
 | 4| My Model|	CNN_96|	64|	96x96|	0.5|	**97.47%**|	**Best performance.** Higher resolution was the key factor.|
+| 5| My Model Optim LR (lr=2.96e-3) | CNN_96 | 64| 96x96| 0.5| 97.47%| Confirmed robustness of the final model with a systematic LR.|
 
 
-### 10.2 Conclusion
+### 11.2 Conclusion
 
-The series of experiments led to a clear and insightful conclusion. The **Base Model**, a CNN2 architecture with 64 filters and dropout, established a strong initial benchmark with **96.27%** accuracy.
+The series of experiments led to a clear and insightful conclusion. An initial **Base Model** (`CNN2` with dropout) established a strong benchmark with **96.27%** accuracy. Experiments to increase the model's capacity by making it **wider** (128 features) or **deeper** (`CNN3`) did not yield better results for the 28x28 input resolution. In fact, the deeper model showed a significant drop in performance to **94.67%**, likely due to excessive spatial information loss from the additional pooling layer.
 
-Experiments to increase the model's capacity by making it **wider** (128 features) or **deeper** (adding a third convolutional block) did not yield better results for the 28x28 input resolution. In fact, the deeper model showed a significant drop in performance to **94.67%**, likely due to excessive spatial information loss from the additional pooling layer.
+The most significant performance gain was achieved in **Experiment 4**, by increasing the input image resolution to **96x96**. This allowed the model to leverage more detailed visual features, reaching a new peak accuracy of **97.47%**. This confirmed the hypothesis that the quality of the input data was a key limiting factor.
 
-The most significant performance gain was achieved in the final experiment, "My Model". By combining a deeper, more efficient architecture (CNN_96) with higher-resolution input images (**96x96**), the model was able to leverage more detailed visual features. This approach resulted in the highest accuracy of **97.47%**, confirming the hypothesis that the primary limiting factor for this problem was the quality of the input data.
+Finally, **Experiment 5** validated this result by systematically finding an optimal learning rate of `2.96e-3` using a Learning Rate Finder. Retraining the final model with this new `lr` produced the same excellent accuracy, adding a higher degree of confidence and robustness to the final result.
 
-Ultimately, the project demonstrates that a successful CNN design is a balance between an architecture's capacity and the quality of the data it processes. For this specific task, providing more detailed images to a well-regularized, appropriately deep network was the most effective strategy for achieving state-of-the-art results.
+Ultimately, the project demonstrates that a successful CNN design is a balance between an architecture's capacity, the quality of the data it processes, and the systematic optimization of hyperparameters.
